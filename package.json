@@ -1,0 +1,25 @@
+{
+  "name": "whats-short-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "server": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.0.3",
+    "puppeteer-core": "^19.6.3",
+    "qrcode-terminal": "^0.12.0",
+    "unirest": "^0.6.0",
+    "whatsapp-web.js": "^1.19.3",
+    "ytdl-core": "^4.11.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  }
+}
