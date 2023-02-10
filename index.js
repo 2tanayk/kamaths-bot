@@ -7,6 +7,7 @@ const ytdl = require('ytdl-core');
 const unirest = require('unirest');
 const cheerio=require('cheerio');
 const { url } = require('inspector');
+var YoutubeMp3Downloader = require("youtube-mp3-downloader");
 
 
 console.log("server running...");
@@ -117,6 +118,35 @@ client.on("ready", () => {
                   throw err;
                 });
 
+              }else if(command.startsWith('/yt download audio')){
+                console.log('downloading audio...')
+                var YD = new YoutubeMp3Downloader({
+                "ffmpegPath": "C:/Users/tanay/ffmpeg-5.1.2/bin/ffmpeg.exe",        // FFmpeg binary location
+                "outputPath": path.join(__dirname,'audio'),    // Output file location (default: the home directory)
+                "youtubeVideoQuality": "highestaudio",  // Desired video quality (default: highestaudio)
+                "queueParallelism": 2,                  // Download parallelism (default: 1)
+                "progressTimeout": 2000,                // Interval in ms for the progress reports (default: 1000)
+                "allowWebm": false                      // Enable download from WebM sources (default: false)
+              });
+
+              //Download video and save as MP3 file
+              YD.download("Xequthp5WjM",'temp.mp3');
+
+              YD.on("finished", function(err, data) {
+                console.log('finished...');
+                console.log(JSON.stringify(data));
+
+                const media=MessageMedia.fromFilePath(path.join(__dirname,'audio','temp.mp3'));
+                chat.sendMessage(media);
+              });
+
+              YD.on("error", function(error) {
+                console.log('Error...',error);
+              });
+
+              YD.on("progress", function(progress) {
+                console.log(JSON.stringify(progress));
+              });
               }else{
                 chat.sendMessage("No such command exists :(\n\nUse /help command to view the possible commands");
               }
