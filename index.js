@@ -68,15 +68,27 @@ client.on("ready", () => {
                 .catch((err) => {
                   throw err;
                 });
-              }else if(/^\/yt download (http(s)?:\/\/)(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9-_]+$/.test(command)){
+              }else if(command.startsWith("/yt download") && !command.includes("audio")){
                 chat.sendMessage('Processing your url...');
+               
                 const url= command.substring(command.lastIndexOf(' ')+1);
                 console.log('YT url',url);
+
+                if(!isValidYTURL(url)){
+                  chat.sendMessage("This url is not supported");
+                  throw new Error("url not supported");
+                }
+
                 const downloadStream=ytdl(url, {format:'mp4',quality:18});
                 const cpyFilePath=path.join(__dirname,'videos','temp.mp4');
                 const outputStream=fs.createWriteStream(cpyFilePath);
 
                 downloadStream.pipe(outputStream);
+
+                outputStream.on('error',(err)=>{
+                  console.log('There was an error..');
+                  throw err;
+                })
 
                 outputStream.on('finish', ()=>{
                   const media=MessageMedia.fromFilePath(cpyFilePath);
@@ -92,9 +104,19 @@ client.on("ready", () => {
 
                 const lastSpaceIndex=command.lastIndexOf(' ');
                 const num=parseInt(command.substring(lastSpaceIndex+1));
+                if(isNaN(num)){
+                  chat.sendMessage('specified number is invalid!');
+                  throw new Error('NaN number');
+                }
+
                 const query=command.substring(getNthSpaceIndex(command,3)+1,lastSpaceIndex)
                 .trim()
                 .replace(' ','+');
+
+                if(!query || query===''){
+                  chat.sendMessage('specify some keywords!');
+                  throw new Error('invalid query');
+                }
 
                 console.log(query,num);
                 const searchUrl=`https://www.google.com/search?q=${query}&tbm=isch`;
@@ -122,10 +144,21 @@ client.on("ready", () => {
               }else if(command.startsWith('/yt download audio')){
                 console.log('downloading audio...')
 
-                chat.sendMessage('Processing your audio...');
+                chat.sendMessage('Processing your url...');
 
                 const url=command.substring(command.lastIndexOf(' ')+1).trim();
+
+                if(!isValidYTURL(url)){
+                  chat.sendMessage("This url is not supported");
+                  throw new Error("url not supported");
+                }
+
                 const videoId=getYTVideoIdByUrl(url);
+
+                if(videoId){
+                  chat.sendMessage('This video doesn\'t exist :(');
+                  throw new Error('Video does not exist');
+                }
 
                 var YD = new YoutubeMp3Downloader({
                 "ffmpegPath": "C:/Users/tanay/ffmpeg-5.1.2/bin/ffmpeg.exe",        // FFmpeg binary location
@@ -135,6 +168,8 @@ client.on("ready", () => {
                 "progressTimeout": 2000,                // Interval in ms for the progress reports (default: 1000)
                 "allowWebm": false                      // Enable download from WebM sources (default: false)
               });
+
+              chat.sendMessage('Extracting audio...');
 
               YD.download(videoId,'temp.mp3');
 
@@ -148,6 +183,7 @@ client.on("ready", () => {
 
               YD.on("error", function(error) {
                 console.log('Error...',error);
+                throw error;
               });
 
               YD.on("progress", function(progress) {
@@ -173,8 +209,14 @@ function botHelpMsg(){
     return '/help - lists all supported commands\n'+
     '/get quote - gets a random quote\n'+
     '/get joke - gets a random joke\n'+
-    '/yt download <url> - downloads and sends the YT video\n'+
-    '/get google images <keywords> <number>';
+    '/yt download <url> - downloads and sends video from the specified YT url\n'+
+    '/yt download audio <url> - downloads and sends only audio from the specified YT url\n'+
+    '/get google images <keywords> <number> - gets specified number of google images for the keywords\n';
+}
+
+function isValidYTURL(url) {
+  var regex = /^(?:https?:\/\/)?(?:www\.)?(?:m\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:[^\s]*)?$/;
+  return regex.test(url);
 }
 
 function getNthSpaceIndex(str, n) {
