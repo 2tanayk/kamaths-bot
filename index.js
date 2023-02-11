@@ -189,6 +189,25 @@ client.on("ready", () => {
               YD.on("progress", function(progress) {
                 console.log(JSON.stringify(progress));
               });
+              }else if(command.startsWith('/search dictionary')){
+                const searchWords=command.substring(getNthSpaceIndex(command,2)+1).trim();
+                console.log(searchWords.length);
+
+                if(!searchWords || searchWords.length===0 || searchWords===-1){
+                  chat.sendMessage('Specify the target word/s!');
+                  throw new Error('Invalid search words');
+                }
+
+                getDictionaryDefinition(searchWords).then(res=>{
+                  if(res){
+                    chat.sendMessage(res);
+                  }else{
+                    chat.sendMessage('Not found :(');
+                  }
+                })
+                .catch(err=>{
+                  throw err;
+                });
               }else{
                 chat.sendMessage("No such command exists :(\n\nUse /help command to view the possible commands");
               }
@@ -321,6 +340,25 @@ async function downloadImage(url, path) {
     const buffer = Buffer.from(arrayBuffer);
     
     return buffer;
+}
+
+async function getDictionaryDefinition(word) {
+  const encodedWord = encodeURIComponent(word);
+  const url = `https://dictionaryapi.com/api/v3/references/collegiate/json/${encodedWord}?key=${process.env.MERRIAM_WEBSTER_API_KEY}`;
+
+  const response = await fetch(url);
+  const data = await response.json();
+
+  let definition=null;
+
+  if (data.length > 0) {
+    definition = data[0]["shortdef"][0];
+    console.log(`Definition of ${word}: ${definition}`);
+  } else {
+    console.log(`The word ${word} was not found.`);
+  }
+
+  return definition;
 }
 
 client.initialize();
