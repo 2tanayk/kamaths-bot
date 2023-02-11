@@ -15,7 +15,7 @@ const client = new Client({
   authStrategy: new LocalAuth(),
   puppeteer:{
     executablePath: 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
-}
+  }
 });
 
 client.on("qr", (qr) => {
@@ -252,16 +252,22 @@ async function getGoogleImageUrls(searchUrl,num,urls){
 
   let ct=0;
 
+  const allUrls=[];
+
   $('div.bRMDJf.islir img').each(function() {
     if($(this).attr('data-src')){
       ct++;
-      urls.push($(this).attr('data-src'));
+      allUrls.push($(this).attr('data-src'));
     }
     
-    if(ct===num){
+    if(ct===num*10){
       return false;
     }
   });
+
+  for(let i=0;i<num;i++){
+    urls.push(allUrls[Math.floor(Math.random() * num*10)])
+  }
 
   console.log(urls);
 }
