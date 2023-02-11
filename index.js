@@ -6,7 +6,6 @@ const { Client, LocalAuth,MessageMedia } = require("whatsapp-web.js");
 const ytdl = require('ytdl-core');
 const unirest = require('unirest');
 const cheerio=require('cheerio');
-const { url } = require('inspector');
 var YoutubeMp3Downloader = require("youtube-mp3-downloader");
 
 
@@ -89,6 +88,8 @@ client.on("ready", () => {
                   });
                 });
               }else if(command.startsWith('/get google images')){
+                chat.sendMessage('Processing your request...');
+
                 const lastSpaceIndex=command.lastIndexOf(' ');
                 const num=parseInt(command.substring(lastSpaceIndex+1));
                 const query=command.substring(getNthSpaceIndex(command,3)+1,lastSpaceIndex)
@@ -120,6 +121,12 @@ client.on("ready", () => {
 
               }else if(command.startsWith('/yt download audio')){
                 console.log('downloading audio...')
+
+                chat.sendMessage('Processing your audio...');
+
+                const url=command.substring(command.lastIndexOf(' ')+1).trim();
+                const videoId=getYTVideoIdByUrl(url);
+
                 var YD = new YoutubeMp3Downloader({
                 "ffmpegPath": "C:/Users/tanay/ffmpeg-5.1.2/bin/ffmpeg.exe",        // FFmpeg binary location
                 "outputPath": path.join(__dirname,'audio'),    // Output file location (default: the home directory)
@@ -129,8 +136,7 @@ client.on("ready", () => {
                 "allowWebm": false                      // Enable download from WebM sources (default: false)
               });
 
-              //Download video and save as MP3 file
-              YD.download("Xequthp5WjM",'temp.mp3');
+              YD.download(videoId,'temp.mp3');
 
               YD.on("finished", function(err, data) {
                 console.log('finished...');
@@ -182,6 +188,16 @@ function getNthSpaceIndex(str, n) {
     }
   }
   return -1;
+}
+
+function getYTVideoIdByUrl(url) {
+  const reg = /^(https?:)?(\/\/)?((www\.|m\.)?youtube(-nocookie)?\.com\/((watch)?\?(feature=\w*&)?vi?=|embed\/|vi?\/|e\/)|youtu.be\/)([\w\-]{10,20})/i
+  const match = url.match(reg);
+  if (match) {
+      return match[9];
+  } else {
+      return null;
+  }
 }
 
 
