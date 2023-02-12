@@ -54,19 +54,27 @@ client.on("ready", () => {
                 chat.sendMessage("Hi! I am a bot!");
               }else if(command==='/get joke'){
                 getJoke().then((joke) => {
-                    console.log(joke);
-                    chat.sendMessage(joke);
-                  })
-                  .catch((err) => {
-                    throw err;
-                  });
+                  console.log('Joke:',joke);
+                  if(!joke){
+                    throw new Error('Some error :(');
+                  }
+                  chat.sendMessage(joke);
+                })
+                .catch((err) => {
+                  console.log('get joke catch:','Some error occured');
+                  chat.sendMessage('Some error occured :(');
+                });
               }else if(command==='/get quote'){
                 getQuote().then((quote)=>{
                     console.log(quote);
+                    if(!quote){
+                      throw new Error('Some error :(');
+                    }
                     chat.sendMessage(quote);
                 })
                 .catch((err) => {
-                  throw err;
+                  console.log('get quote catch:','Some error occured');
+                  chat.sendMessage('Some error occured :(');
                 });
               }else if(command.startsWith("/yt download") && !command.includes("audio")){
                 chat.sendMessage('Processing your url...');
@@ -86,9 +94,9 @@ client.on("ready", () => {
                 downloadStream.pipe(outputStream);
 
                 outputStream.on('error',(err)=>{
-                  console.log('There was an error..');
-                  throw err;
-                })
+                  console.log('There was an error downloading YT video..',err);
+                  chat.sendMessage('There was some error :(');
+                });
 
                 outputStream.on('finish', ()=>{
                   const media=MessageMedia.fromFilePath(cpyFilePath);
@@ -96,7 +104,8 @@ client.on("ready", () => {
                   chat.sendMessage(media)
                   .then(res=>console.log(res))
                   .catch(err=>{
-                    throw err;
+                    console.log('get YT video catch:','Some error occured',err);
+                    chat.sendMessage('Some error occured :(');
                   });
                 });
               }else if(command.startsWith('/get google images')){
@@ -122,25 +131,34 @@ client.on("ready", () => {
                 const searchUrl=`https://www.google.com/search?q=${query}&tbm=isch`;
                 const imagePath=path.join(__dirname,'images','temp.jpg');
                 const urls=[];
-                getGoogleImageUrls(searchUrl,num,urls).then(()=>{
+                getGoogleImageUrls(searchUrl,num,urls).then((res)=>{
                   console.log('urls:',urls);
 
-                  async function sendImages(){
-                    for(const url of urls){
-                      const buffer = await downloadImage(url,imagePath);
-                      console.log('image downloaded!')
-                      fs.writeFileSync(imagePath,buffer);
-                      console.log('image copied to file','sending....');
-                      const media=MessageMedia.fromFilePath(imagePath);
-                      chat.sendMessage(media);
-                    }
+                  if(!res){
+                    throw new Error('Some error occured :(');
                   }
 
-                  sendImages();
+                  try {
+                    async function sendImages(){
+                      for(const url of urls){
+                        const buffer = await downloadImage(url,imagePath);
+                        console.log('image downloaded!')
+                        fs.writeFileSync(imagePath,buffer);
+                        console.log('image copied to file','sending....');
+                        const media=MessageMedia.fromFilePath(imagePath);
+                        chat.sendMessage(media);
+                      }
+                    }
+  
+                    sendImages();
+                  } catch (error) {
+                    console.log('Error downloading images',error);
+                    chat.sendMessage('Error occured while downloading images :(');
+                  }
                 }).catch(err=>{
-                  throw err;
+                  console.log('get images catch:','Some error occured');
+                  chat.sendMessage('Some error occured :(');
                 });
-
               }else if(command.startsWith('/yt download audio')){
                 console.log('downloading audio...')
 
@@ -155,7 +173,7 @@ client.on("ready", () => {
 
                 const videoId=getYTVideoIdByUrl(url);
 
-                if(videoId){
+                if(!videoId){
                   chat.sendMessage('This video doesn\'t exist :(');
                   throw new Error('Video does not exist');
                 }
@@ -182,8 +200,8 @@ client.on("ready", () => {
               });
 
               YD.on("error", function(error) {
-                console.log('Error...',error);
-                throw error;
+                console.log('Error downloading audio...',error);
+                chat.sendMessage('Some error occured :(');
               });
 
               YD.on("progress", function(progress) {
@@ -202,11 +220,12 @@ client.on("ready", () => {
                   if(res){
                     chat.sendMessage(res);
                   }else{
-                    chat.sendMessage('Not found :(');
+                    throw new Error('Some error :(');
                   }
                 })
                 .catch(err=>{
-                  throw err;
+                  console.log('get dict. meaning catch:','Some error occured');
+                  chat.sendMessage('Some error occured :(');
                 });
               }else{
                 chat.sendMessage("No such command exists :(\n\nUse /help command to view the possible commands");
@@ -263,28 +282,38 @@ function getYTVideoIdByUrl(url) {
 
 
 async function getJoke() {
-  const res = await fetch("https://icanhazdadjoke.com/", {
+  try {
+    const res = await fetch("https://icanhazdadjoke.com/", {
     method: "GET",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
     },
   });
-
+  
   const resJson = await res.json();
 
   console.log(resJson);
 
   return resJson.joke;
+  } catch (error) {
+    console.log('Error occured while fetching joke',error);
+    return null;
+  }
 }
 
 async function getQuote(){
+  try {
     const res=await fetch("https://api.quotable.io/random");
     const resJson=await res.json();
 
     console.log(resJson);
 
-    return `"${resJson.content}"\n ~${resJson.author}`;
+    return `"${resJson.content}"\n ~${resJson.author}`; 
+  } catch (error) {
+    console.log('Error occured while fetching quote',error);
+    return null;
+  }
 }
 
 async function getGoogleImageUrls(searchUrl,num,urls){
@@ -306,31 +335,39 @@ async function getGoogleImageUrls(searchUrl,num,urls){
   let header = {
     "User-Agent": `${user_agent}`,
   };
+  
 
-  const res=await unirest.get(searchUrl).headers(header);
+  try {
+    const res=await unirest.get(searchUrl).headers(header);
 
-  let $=cheerio.load(res.body);
+    let $=cheerio.load(res.body);
 
-  let ct=0;
+    let ct=0;
 
-  const allUrls=[];
+    const allUrls=[];
 
-  $('div.bRMDJf.islir img').each(function() {
-    if($(this).attr('data-src')){
-      ct++;
-      allUrls.push($(this).attr('data-src'));
+    $('div.bRMDJf.islir img').each(function() {
+      if($(this).attr('data-src')){
+        ct++;
+        allUrls.push($(this).attr('data-src'));
+      }
+      
+      if(ct===num*10){
+        return false;
+      }
+    });
+
+    for(let i=0;i<num;i++){
+      urls.push(allUrls[Math.floor(Math.random() * num*10)])
     }
-    
-    if(ct===num*10){
-      return false;
-    }
-  });
 
-  for(let i=0;i<num;i++){
-    urls.push(allUrls[Math.floor(Math.random() * num*10)])
+    console.log(urls);
+
+    return 1;
+  } catch (error) {
+    console.log('error downloading images',error);
+    return null;
   }
-
-  console.log(urls);
 }
 
 async function downloadImage(url, path) {
@@ -343,22 +380,27 @@ async function downloadImage(url, path) {
 }
 
 async function getDictionaryDefinition(word) {
-  const encodedWord = encodeURIComponent(word);
-  const url = `https://dictionaryapi.com/api/v3/references/collegiate/json/${encodedWord}?key=${process.env.MERRIAM_WEBSTER_API_KEY}`;
+  try {
+    const encodedWord = encodeURIComponent(word);
+    const url = `https://dictionaryapi.com/api/v3/references/collegiate/json/${encodedWord}?key=${process.env.MERRIAM_WEBSTER_API_KEY}`;
 
-  const response = await fetch(url);
-  const data = await response.json();
+    const response = await fetch(url);
+    const data = await response.json();
 
-  let definition=null;
+    let definition=null;
 
-  if (data.length > 0) {
-    definition = data[0]["shortdef"][0];
-    console.log(`Definition of ${word}: ${definition}`);
-  } else {
-    console.log(`The word ${word} was not found.`);
+    if (data.length > 0) {
+      definition = data[0]["shortdef"][0];
+      console.log(`Definition of ${word}: ${definition}`);
+    } else {
+      console.log(`The word ${word} was not found.`);
+    }
+
+    return definition;
+  } catch (error) {
+    console.log('Error occured while fetching dict. meaning',error);
+    return null;
   }
-
-  return definition;
 }
 
 client.initialize();
