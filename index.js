@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 const qrcode = require("qrcode-terminal");
-const { Client, LocalAuth,MessageMedia } = require("whatsapp-web.js");
+const { Client, LocalAuth, MessageMedia } = require("whatsapp-web.js");
 const ytdl = require('ytdl-core');
 const unirest = require('unirest');
 const cheerio=require('cheerio');
@@ -95,7 +95,7 @@ client.on("ready", () => {
 
                 outputStream.on('error',(err)=>{
                   console.log('There was an error downloading YT video..',err);
-                  chat.sendMessage('There was some error :(');
+                  chat.sendMessage('There was some error downloading the video :(');
                 });
 
                 outputStream.on('finish', ()=>{
@@ -196,7 +196,13 @@ client.on("ready", () => {
                 console.log(JSON.stringify(data));
 
                 const media=MessageMedia.fromFilePath(path.join(__dirname,'audio','temp.mp3'));
-                chat.sendMessage(media);
+
+                chat.sendMessage(media)
+                .then(res=>console.log(res))
+                .catch(err=>{
+                  console.log('get YT video audio catch:','Some error occured',err);
+                  chat.sendMessage('Some error occured :(');
+                });
               });
 
               YD.on("error", function(error) {
@@ -207,6 +213,7 @@ client.on("ready", () => {
               YD.on("progress", function(progress) {
                 console.log(JSON.stringify(progress));
               });
+              
               }else if(command.startsWith('/search dictionary')){
                 const searchWords=command.substring(getNthSpaceIndex(command,2)+1).trim();
                 console.log(searchWords.length);
@@ -249,7 +256,8 @@ function botHelpMsg(){
     '/get joke - gets a random joke\n'+
     '/yt download <url> - downloads and sends video from the specified YT url\n'+
     '/yt download audio <url> - downloads and sends only audio from the specified YT url\n'+
-    '/get google images <keywords> <number> - gets specified number of google images for the keywords\n';
+    '/get google images <keywords> <number> - gets specified number of google images for the keywords\n'+
+    '/search dictionary <keywords> - search the merriam webster collegiate dictionary';
 }
 
 function isValidYTURL(url) {
@@ -290,12 +298,12 @@ async function getJoke() {
       "Content-Type": "application/json",
     },
   });
-  
-  const resJson = await res.json();
+    
+    const resJson = await res.json();
 
-  console.log(resJson);
+    console.log(resJson);
 
-  return resJson.joke;
+    return resJson.joke;
   } catch (error) {
     console.log('Error occured while fetching joke',error);
     return null;
@@ -371,12 +379,17 @@ async function getGoogleImageUrls(searchUrl,num,urls){
 }
 
 async function downloadImage(url, path) {
+  try {
     const response = await fetch(url);
     const blob = await response.blob();
     const arrayBuffer = await blob.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
     return buffer;
+  } catch (error) {
+    console.log('Error while downloading images',error);
+    return null;
+  }
 }
 
 async function getDictionaryDefinition(word) {
