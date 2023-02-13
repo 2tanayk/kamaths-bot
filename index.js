@@ -25,8 +25,9 @@ const client = new Client({
   
   puppeteer:{
     //'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe'
+    headless: true,
     executablePath: '/usr/bin/google-chrome',
-    args: ["--no-sandbox","--single-process"]
+    args: ['--no-sandbox', '--disable-gpu','--single-process']
   }
 });
 
