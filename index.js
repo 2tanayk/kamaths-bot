@@ -2,21 +2,41 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 const qrcode = require("qrcode-terminal");
-const { Client, LocalAuth, MessageMedia } = require("whatsapp-web.js");
+const { Client, LocalAuth, RemoteAuth, MessageMedia } = require("whatsapp-web.js");
 const ytdl = require('ytdl-core');
 const unirest = require('unirest');
 const cheerio=require('cheerio');
 var YoutubeMp3Downloader = require("youtube-mp3-downloader");
+const ffmpegPath=require('ffmpeg-static');
+const { MongoStore } = require('wwebjs-mongo');
+const mongoose = require('mongoose');
 
 
 console.log("server running...");
+console.log('path to ffmpeg',ffmpegPath);
+
+const store= new MongoStore({ mongoose: mongoose });
 
 const client = new Client({
-  authStrategy: new LocalAuth(),
+  authStrategy: new RemoteAuth({
+    store: store,
+    backupSyncIntervalMs: 300000
+  }),
+  
   puppeteer:{
-    executablePath: 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+    //'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe'
+    executablePath: '/usr/bin/google-chrome',
+    args: ["--no-sandbox", "--disable-gpu"]
   }
 });
+
+mongoose.connect(process.env.MONGODB_URI).then(() => {
+  client.initialize();
+});
+
+client.on('remote_session_saved', () => {
+  console.log('session saved to remote db!')
+})
 
 client.on("qr", (qr) => {
   qrcode.generate(qr, { small: true });
@@ -179,7 +199,7 @@ client.on("ready", () => {
                 }
 
                 var YD = new YoutubeMp3Downloader({
-                "ffmpegPath": "C:/Users/tanay/ffmpeg-5.1.2/bin/ffmpeg.exe",        // FFmpeg binary location
+                "ffmpegPath": ffmpegPath,        // FFmpeg binary location
                 "outputPath": path.join(__dirname,'audio'),    // Output file location (default: the home directory)
                 "youtubeVideoQuality": "highestaudio",  // Desired video quality (default: highestaudio)
                 "queueParallelism": 2,                  // Download parallelism (default: 1)
@@ -415,5 +435,3 @@ async function getDictionaryDefinition(word) {
     return null;
   }
 }
-
-client.initialize();
