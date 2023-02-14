@@ -132,4 +132,4 @@ dist
 .wwebjs_auth/
 key/
 
-*.zip
+RemoteAuth.zip
