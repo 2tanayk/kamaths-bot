@@ -31,7 +31,7 @@ const client = new Client({
     '--disable-setuid-sandbox',
     '--disable-dev-shm-usage',
     '--single-process',
-    '--shm-size=3gb',
+    '--shm-size=3gb'
   ]
   }
 });
