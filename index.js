@@ -30,7 +30,8 @@ const client = new Client({
     args: ['--no-sandbox',
     '--disable-setuid-sandbox',
     '--disable-dev-shm-usage',
-    '--single-process'
+    '--single-process',
+    '--shm-size=3gb',
   ]
   }
 });
