@@ -9,10 +9,10 @@ https://user-images.githubusercontent.com/60653277/218859513-68ae5ce3-8910-48e9-
 - /help - lists all supported commands
 - /get quote - gets a random quote
 - /get joke - gets a random joke
-- /yt download <url> - downloads and sends video from the specified YT url
-- /yt download audio <url> - downloads and sends only audio from the specified YT url
-- /get google images <keywords> <number> - gets specified number of google images for the keywords
-- /search dictionary <keywords> - search the merriam webster collegiate dictionary
+- /yt download \<url\> - downloads and sends video from the specified YT url
+- /yt download audio \<url\> - downloads and sends only audio from the specified YT url
+- /get google images \<keywords\> \<number\> - gets specified number of google images for the keywords
+- /search dictionary \<keywords\> - search the merriam webster collegiate dictionary
 
 ## Built With
 - [Node.js](https://nodejs.org/)
